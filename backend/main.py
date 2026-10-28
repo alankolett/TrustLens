@@ -2,6 +2,7 @@
 Stateless, privacy-preserving scam and deepfake verification backend.
 """
 from __future__ import annotations
+import sys
 import os
 import time
 import json
@@ -9,16 +10,30 @@ from pathlib import Path
 from typing import Dict, Tuple
 from contextlib import asynccontextmanager
 
+# Ensure both current directory and parent directory are on sys.path
+_cur_dir = Path(__file__).resolve().parent
+_root_dir = _cur_dir.parent
+for _p in (_cur_dir, _root_dir):
+    if str(_p) not in sys.path:
+        sys.path.insert(0, str(_p))
+
 from fastapi import FastAPI, HTTPException, Request, Response, UploadFile, File, Form, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 
-from backend.models import TextCheckRequest, FinalVerdictResponse, ImageCheckResponse
-from backend.rules import evaluate_rules
-from backend.grok_client import analyze_text_with_grok, check_model_availability
-from backend.combiner import combine_verdicts
-from backend.detectors import validate_magic_bytes, evaluate_image
+try:
+    from backend.models import TextCheckRequest, FinalVerdictResponse, ImageCheckResponse
+    from backend.rules import evaluate_rules
+    from backend.grok_client import analyze_text_with_grok, check_model_availability
+    from backend.combiner import combine_verdicts
+    from backend.detectors import validate_magic_bytes, evaluate_image
+except ImportError:
+    from models import TextCheckRequest, FinalVerdictResponse, ImageCheckResponse
+    from rules import evaluate_rules
+    from grok_client import analyze_text_with_grok, check_model_availability
+    from combiner import combine_verdicts
+    from detectors import validate_magic_bytes, evaluate_image
 
 load_dotenv()
 
