@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PhoneCall, ExternalLink, Copy, Check, ShieldAlert, KeyRound, AlertOctagon, FileText } from 'lucide-react';
+import { PhoneCall, ExternalLink, Copy, Check, FileText, AlertCircle } from 'lucide-react';
 import { Language, I18N } from '../i18n';
 import { VerdictData } from './VerdictCard';
 
@@ -21,26 +21,24 @@ export const SafetyReport: React.FC<SafetyReportProps> = ({
   const generateComplaintSummary = (): string => {
     const timestamp = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
     const flagsList = (verdictData.flags || []).map((f: any) => `• ${f.title || f.title_en || f}`).join('\n');
-    const excerpt = originalText ? (originalText.length > 300 ? originalText.substring(0, 300) + '...' : originalText) : 'N/A';
+    const excerpt = originalText ? (originalText.length > 250 ? originalText.substring(0, 250) + '...' : originalText) : 'N/A';
 
-    return `=== TRUSTLENS CYBER INCIDENT FORENSIC RECORD ===
-[EVIDENTIARY DECLARATION UNDER BSA 2023 SEC 63 / IEA 1872 SEC 65B]
+    return `=== TRUSTLENS INCIDENT REPORT ===
+Timestamp: ${timestamp} IST
+Risk Level: ${verdictData.verdict.toUpperCase()} (Threat Score: ${verdictData.confidence}%)
+Type: ${verdictData.scam_type || 'Digital Fraud / Social Engineering'}
 
-Incident Timestamp: ${timestamp} IST
-Assessed Risk Level: ${verdictData.verdict.toUpperCase()} (${verdictData.confidence}% Confidence Index)
-Identified Scam Class: ${verdictData.scam_type || 'Social Engineering / Digital Fraud'}
-
-SUSPICIOUS EVIDENCE PAYLOAD:
+SUSPICIOUS CONTENT:
 "${excerpt}"
 
-DETECTED HEURISTIC THREAT INDICATORS:
-${flagsList || '• Multi-vector algorithmic threat patterns detected'}
+DETECTED INDICATORS:
+${flagsList || '• Matched known scam heuristic patterns'}
 
-IMMEDIATE CITIZEN SAFETY DIRECTIVES:
-1. NEVER share OTP, MPIN, UPI PIN, or net-banking passwords with any caller.
-2. NEVER install remote administration software (AnyDesk, TeamViewer, QuickSupport, RustDesk).
-3. In case of financial debit, report within the 1-hour golden window at Helpline 1930 or https://cybercrime.gov.in
-================================================`;
+RECOMMENDED IMMEDIATE ACTION:
+1. Do not transfer funds or share OTP/passwords.
+2. If already transferred, call Helpline 1930 immediately to freeze transactions.
+3. Report the incident at https://cybercrime.gov.in
+=================================`;
   };
 
   const handleCopy = async () => {
@@ -48,7 +46,7 @@ IMMEDIATE CITIZEN SAFETY DIRECTIVES:
     try {
       await navigator.clipboard.writeText(summary);
       setCopied(true);
-      setTimeout(() => setCopied(false), 3000);
+      setTimeout(() => setCopied(false), 2500);
     } catch {
       const textarea = document.createElement('textarea');
       textarea.value = summary;
@@ -57,32 +55,32 @@ IMMEDIATE CITIZEN SAFETY DIRECTIVES:
       document.execCommand('copy');
       document.body.removeChild(textarea);
       setCopied(true);
-      setTimeout(() => setCopied(false), 3000);
+      setTimeout(() => setCopied(false), 2500);
     }
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Golden Hour Urgent Warning */}
-      <div className="rounded-3xl bg-amber-500/10 border border-amber-500/40 p-5 flex items-start gap-3.5 backdrop-blur-xl shadow-lg">
-        <AlertOctagon className="w-6 h-6 text-amber-400 flex-shrink-0 mt-0.5 animate-pulse" />
+      <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-4 flex items-start gap-3">
+        <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
         <div>
-          <h4 className="text-sm font-black text-amber-200 uppercase tracking-wide">
+          <h4 className="text-xs font-semibold text-amber-300 uppercase tracking-wider">
             {t.emergencyHeader}
           </h4>
-          <p className="text-xs sm:text-sm font-semibold text-amber-300/90 mt-1 leading-relaxed">
+          <p className="text-xs sm:text-sm text-zinc-300 mt-1 leading-relaxed">
             {t.emergencyAlertPaid}
           </p>
         </div>
       </div>
 
       {/* Action Buttons: 1930 & Portal */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
         <a
           href="tel:1930"
-          className="flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 active:scale-95 text-white font-black text-base sm:text-lg shadow-xl shadow-red-600/30 transition-all text-center"
+          className="flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl bg-red-600 hover:bg-red-700 active:scale-[0.98] text-white font-medium text-sm transition-colors text-center shadow-xs"
         >
-          <PhoneCall className="w-5 h-5 stroke-[2.5]" />
+          <PhoneCall className="w-4 h-4 stroke-[2.2]" />
           <span>{t.btnCall1930}</span>
         </a>
 
@@ -90,65 +88,55 @@ IMMEDIATE CITIZEN SAFETY DIRECTIVES:
           href="https://cybercrime.gov.in"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-slate-900 hover:bg-slate-800 active:scale-95 border border-slate-700 text-white font-black text-base sm:text-lg shadow-xl transition-all text-center"
+          className="flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 active:scale-[0.98] border border-white/[0.08] text-zinc-200 font-medium text-sm transition-colors text-center"
         >
-          <ExternalLink className="w-5 h-5 text-orange-400" />
+          <ExternalLink className="w-4 h-4 text-zinc-400" />
           <span>{t.btnOpenCybercrime}</span>
         </a>
       </div>
 
-      {/* Copy Section 63 BSA Police Complaint Summary */}
-      <div className="flex flex-col sm:flex-row gap-2">
-        <button
-          onClick={handleCopy}
-          className="flex-1 flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-2xl bg-slate-900/90 hover:bg-slate-850 border border-slate-700/80 active:scale-95 text-slate-100 font-bold text-xs sm:text-sm shadow-md transition-all"
-        >
-          {copied ? (
-            <>
-              <Check className="w-4 h-4 text-emerald-400 stroke-[2.5]" />
-              <span className="text-emerald-300 font-black">{t.summaryCopied}</span>
-            </>
-          ) : (
-            <>
-              <Copy className="w-4 h-4 text-orange-400" />
-              <span>{t.btnCopySummary} (Section 63 BSA)</span>
-            </>
-          )}
-        </button>
-
-        <button
-          onClick={() => setShowPreview(!showPreview)}
-          className="px-4 py-3.5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5"
-        >
-          <FileText className="w-4 h-4 text-slate-400" />
-          <span>{showPreview ? 'Hide Text' : 'Preview Text'}</span>
-        </button>
-      </div>
-
-      {/* Complaint Preview Box */}
-      {showPreview && (
-        <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 font-mono text-[11px] text-slate-300 whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto animate-fadeIn">
-          {generateComplaintSummary()}
-        </div>
-      )}
-
-      {/* Family Safe-Word Tip Card */}
-      <div className="rounded-3xl bg-slate-900/60 border border-slate-800 p-5 shadow-xl backdrop-blur-xl">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-9 h-9 rounded-xl bg-orange-500/15 border border-orange-500/30 text-orange-400 flex items-center justify-center flex-shrink-0">
-            <KeyRound className="w-4 h-4" />
+      {/* Copy Incident Summary */}
+      <div className="rounded-xl bg-zinc-900/60 border border-white/[0.06] p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <FileText className="w-4 h-4 text-zinc-400" />
+          <div>
+            <span className="text-xs font-medium text-zinc-300">Official Incident Record</span>
+            <span className="text-[11px] text-zinc-500 block">Pre-formatted text summary for reporting to 1930 or local police</span>
           </div>
-          <h4 className="text-sm font-bold text-white">
-            💡 {t.safeWordTitle}
-          </h4>
         </div>
-        <p className="text-xs text-slate-300 mb-3 leading-relaxed">
-          {t.safeWordDesc}
-        </p>
-        <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 text-xs font-medium text-orange-300 leading-relaxed">
-          {t.safeWordHow}
+
+        <div className="flex items-center gap-2 self-stretch sm:self-auto justify-end">
+          <button
+            onClick={() => setShowPreview(!showPreview)}
+            className="px-2.5 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 rounded-md transition-colors"
+          >
+            {showPreview ? 'Hide Preview' : 'Preview'}
+          </button>
+          <button
+            onClick={handleCopy}
+            className="px-3 py-1.5 text-xs font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white rounded-md border border-white/[0.08] transition-colors flex items-center gap-1.5"
+          >
+            {copied ? (
+              <>
+                <Check className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Copied</span>
+              </>
+            ) : (
+              <>
+                <Copy className="w-3.5 h-3.5" />
+                <span>{t.btnCopySummary}</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
+
+      {/* Expandable Preview */}
+      {showPreview && (
+        <pre className="p-3.5 rounded-xl bg-zinc-950 border border-white/[0.08] text-[11px] font-mono text-zinc-300 overflow-x-auto whitespace-pre-wrap leading-relaxed animate-fadeIn">
+          {generateComplaintSummary()}
+        </pre>
+      )}
     </div>
   );
 };

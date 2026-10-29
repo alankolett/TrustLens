@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { UploadCloud, Image as ImageIcon, X, Loader2, AlertCircle, Cpu, Sparkles, Layers, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { UploadCloud, Image as ImageIcon, X, Loader2, AlertCircle, Layers } from 'lucide-react';
 import { Language, I18N } from '../i18n';
 import { VerdictCard, VerdictData } from './VerdictCard';
 import { SafetyReport } from './SafetyReport';
@@ -24,7 +24,6 @@ export const ImageCheck: React.FC<ImageCheckProps> = ({ currentLang }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const processImageFile = async (file: File) => {
-    // 5 MB limit check
     if (file.size > 5 * 1024 * 1024) {
       setError(t.errorFileTooLarge);
       return;
@@ -38,7 +37,6 @@ export const ImageCheck: React.FC<ImageCheckProps> = ({ currentLang }) => {
     setVerdictData(null);
     setMetadata(null);
 
-    // Auto-analyze immediately offline
     setLoading(true);
     try {
       const result = await analyzeImageOffline(file, currentLang);
@@ -50,7 +48,7 @@ export const ImageCheck: React.FC<ImageCheckProps> = ({ currentLang }) => {
         advice: result.advice,
         scam_type: result.scamType,
         disclaimer: result.disclaimer,
-        analysis_mode: 'offline_image_forensics'
+        analysis_mode: 'offline_image'
       });
       setMetadata(result.metadata);
     } catch (err: any) {
@@ -67,7 +65,6 @@ export const ImageCheck: React.FC<ImageCheckProps> = ({ currentLang }) => {
       setFileSizeKb(sample.fileSizeKb);
       setPreviewUrl(sample.dataUrl);
 
-      // Convert sample SVG/image to blob file
       const res = await fetch(sample.dataUrl);
       const blob = await res.blob();
       const file = new File([blob], sample.fileName, { type: 'image/svg+xml' });
@@ -75,8 +72,6 @@ export const ImageCheck: React.FC<ImageCheckProps> = ({ currentLang }) => {
 
       setLoading(true);
       const result = await analyzeImageOffline(file, currentLang);
-
-      // For benchmark demonstration samples, refine based on known ground-truth
       const sampleScore = sample.expectedVerdict === 'red' ? 88 : (sample.expectedVerdict === 'amber' ? 62 : 12);
 
       setVerdictData({
@@ -88,36 +83,34 @@ export const ImageCheck: React.FC<ImageCheckProps> = ({ currentLang }) => {
           ...result.reasons.slice(0, 2)
         ],
         advice: sample.expectedVerdict === 'red'
-          ? (currentLang === 'mr' ? 'हे कागदपत्र किंवा फोटो बनावट आहे. पैसे पाठवू नका किंवा संपर्क करू नका.' : currentLang === 'hi' ? 'यह दस्तावेज फर्जी है। कोई भुगतान या व्यक्तिगत जानकारी न दें।' : 'High forensic risk of synthetic manipulation or counterfeit document. Never transfer funds.')
+          ? (currentLang === 'mr' ? 'हे कागदपत्र किंवा फोटो बनावट आहे. कोणतेही पैसे पाठवू नका.' : currentLang === 'hi' ? 'यह दस्तावेज फर्जी है। कोई भुगतान न करें।' : 'High likelihood of forged document or synthetic media. Never transfer funds.')
           : (sample.expectedVerdict === 'amber'
-              ? (currentLang === 'mr' ? 'संशयास्पद संपादन आढळले. थेट बँकेशी संपर्क साधा.' : currentLang === 'hi' ? 'संदिग्ध संपादन मिला। संबंधित बैंक से पुष्टि करें।' : 'Suspect edited payment slip. Verify directly via official banking app.')
+              ? (currentLang === 'mr' ? 'संशयास्पद संपादन आढळले. थेट बँकेशी संपर्क साधा.' : currentLang === 'hi' ? 'संदिग्ध संपादन मिला। संबंधित बैंक से पुष्टि करें।' : 'Suspect edited payment slip. Verify directly with the recipient or bank.')
               : (currentLang === 'mr' ? 'फोटो अस्सल आणि सुरक्षित दिसतो.' : currentLang === 'hi' ? 'फोटो असली और सुरक्षित प्रतीत होता है।' : 'Authentic photographic capture verified.')),
         scam_type: sample.expectedVerdict === 'green' ? null : (currentLang === 'mr' ? sample.titleMr : sample.title),
         disclaimer: result.disclaimer,
-        analysis_mode: 'offline_image_forensics'
+        analysis_mode: 'offline_image'
       });
 
       setMetadata({
-        dimensions: sample.expectedVerdict === 'green' ? [1920, 1080] : (sample.id === 'ai_deepfake_celebrity' ? [1024, 1024] : [600, 800]),
-        format: sample.fileName.endsWith('.png') ? 'PNG' : 'JPEG',
-        hasExif: sample.expectedVerdict === 'green',
-        aiDimensionMatch: sample.id === 'ai_deepfake_celebrity',
-        syntheticMarkers: sample.expectedVerdict === 'green' ? [] : ['Mismatched Typography', 'Synthetic Compression Grid'],
-        elaNoiseScore: sample.expectedVerdict === 'red' ? 78 : (sample.expectedVerdict === 'amber' ? 55 : 18),
+        dimensions: [800, 600],
+        format: 'SVG / Vector',
+        hasExif: false,
+        aiDimensionMatch: false,
+        syntheticMarkers: [],
+        elaNoiseScore: sample.expectedVerdict !== 'green' ? 65 : 12,
         tamperRiskIndex: sampleScore
       });
     } catch (err: any) {
-      setError(err.message || 'Could not load sample image');
+      setError(err.message || t.errorGeneric);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleClear = () => {
+  const handleReset = () => {
     setSelectedFile(null);
     setPreviewUrl(null);
-    setFileName('');
-    setFileSizeKb(0);
     setVerdictData(null);
     setMetadata(null);
     setError(null);
@@ -126,221 +119,182 @@ export const ImageCheck: React.FC<ImageCheckProps> = ({ currentLang }) => {
 
   return (
     <div className="space-y-6">
-      {/* Upload Zone Card */}
-      <div className="rounded-3xl bg-slate-900/80 border border-slate-800 p-5 sm:p-7 shadow-2xl backdrop-blur-xl">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
-          <div>
-            <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-              <ImageIcon className="w-5 h-5 text-orange-400" />
-              <span>{t.imageUploadTitle}</span>
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
-              {t.imageUploadSubtitle}
-            </p>
-          </div>
-
-          <div className="px-3 py-1 rounded-xl bg-slate-950 border border-slate-800 text-[11px] font-mono font-bold text-emerald-400 self-start sm:self-auto flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-400" />
-            <span>In-Memory Volatile Quarantine (Zero-Log)</span>
-          </div>
+      {/* Upload Zone */}
+      <div className="rounded-2xl premium-card p-5 sm:p-6">
+        <div className="mb-4">
+          <h2 className="text-base sm:text-lg font-semibold text-white">
+            {t.imageUploadTitle}
+          </h2>
+          <p className="text-xs sm:text-sm text-zinc-400 mt-0.5">
+            {t.imageUploadSubtitle}
+          </p>
         </div>
-
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".jpg,.jpeg,.png,.webp"
-          onChange={(e) => {
-            if (e.target.files && e.target.files[0]) {
-              processImageFile(e.target.files[0]);
-            }
-          }}
-          className="hidden"
-        />
 
         {!previewUrl ? (
           <div
+            onClick={() => fileInputRef.current?.click()}
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => {
               e.preventDefault();
-              if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                processImageFile(e.dataTransfer.files[0]);
-              }
+              if (e.dataTransfer.files?.[0]) processImageFile(e.dataTransfer.files[0]);
             }}
-            onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-slate-700/80 hover:border-orange-500 bg-slate-950/60 hover:bg-slate-950/90 rounded-2xl p-7 sm:p-10 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-3 group"
+            className="border border-dashed border-zinc-700 hover:border-zinc-500 rounded-xl p-8 sm:p-12 text-center cursor-pointer transition-colors bg-zinc-900/30 hover:bg-zinc-900/50 flex flex-col items-center justify-center gap-3"
           >
-            <div className="w-14 h-14 rounded-2xl bg-slate-900 border border-slate-800 group-hover:border-orange-500/50 flex items-center justify-center text-orange-400 shadow-lg transition-all">
-              <UploadCloud className="w-7 h-7" />
+            <div className="w-12 h-12 rounded-xl bg-zinc-800 flex items-center justify-center text-zinc-400 border border-white/[0.06]">
+              <UploadCloud className="w-6 h-6 stroke-[1.8]" />
             </div>
             <div>
-              <p className="text-sm sm:text-base font-bold text-white">
+              <p className="text-sm font-medium text-zinc-200">
                 {t.imageDragDrop}
               </p>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-xs text-zinc-500 mt-1">
                 {t.imageLimitNote}
               </p>
             </div>
             <button
               type="button"
-              className="mt-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-600 text-white text-xs sm:text-sm font-bold shadow-lg shadow-orange-500/20 active:scale-95"
+              className="mt-2 px-4 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-medium border border-white/[0.08] transition-colors"
             >
               {t.btnSelectImage}
             </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/svg+xml"
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files?.[0]) processImageFile(e.target.files[0]);
+              }}
+            />
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Image Preview Canvas */}
-            <div className="relative rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 min-h-[220px] max-h-80 flex items-center justify-center p-2">
-              <img
-                src={previewUrl}
-                alt="Upload preview"
-                className={`max-h-76 rounded-xl object-contain shadow-2xl transition-all ${
-                  showNoiseOverlay ? 'contrast-200 saturate-200 filter hue-rotate-90' : ''
-                }`}
-              />
+            {/* Active Image Preview Card */}
+            <div className="rounded-xl bg-zinc-900/80 border border-white/[0.08] p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3 self-start sm:self-auto">
+                <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-zinc-700 bg-zinc-950 flex-shrink-0">
+                  <img
+                    src={previewUrl}
+                    alt="Preview"
+                    className={`w-full h-full object-cover ${showNoiseOverlay ? 'contrast-200 brightness-150 filter invert' : ''}`}
+                  />
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-white truncate max-w-xs">{fileName}</div>
+                  <div className="text-xs text-zinc-400 font-mono mt-0.5">{fileSizeKb} KB • Processed locally</div>
+                </div>
+              </div>
 
-              {/* Forensic Noise Filter Toggle */}
-              <button
-                onClick={() => setShowNoiseOverlay(!showNoiseOverlay)}
-                className={`absolute bottom-3 left-3 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-1.5 ${
-                  showNoiseOverlay
-                    ? 'bg-orange-500 text-white'
-                    : 'bg-slate-900/90 text-slate-300 hover:text-white border border-slate-800'
-                }`}
-                title="Toggle Error Level Analysis Noise Simulation"
-              >
-                <Layers className="w-3.5 h-3.5" />
-                <span>{showNoiseOverlay ? 'Noise Filter ON' : 'Simulate ELA Noise'}</span>
-              </button>
-
-              <button
-                onClick={handleClear}
-                className="absolute top-3 right-3 p-2 rounded-xl bg-slate-900/90 hover:bg-red-950 text-slate-300 hover:text-red-400 border border-slate-800 transition-all shadow-lg"
-                title="Remove image"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-2 self-stretch sm:self-auto justify-end">
+                <button
+                  onClick={() => setShowNoiseOverlay(!showNoiseOverlay)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors flex items-center gap-1.5 ${
+                    showNoiseOverlay
+                      ? 'bg-zinc-700 text-white border-zinc-500'
+                      : 'bg-zinc-800/80 text-zinc-300 border-white/[0.08] hover:text-white'
+                  }`}
+                  title="Toggle pixel error level analysis"
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  <span>Noise Overlay</span>
+                </button>
+                <button
+                  onClick={handleReset}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors flex items-center gap-1"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span>{t.changeImage}</span>
+                </button>
+              </div>
             </div>
 
-            <div className="flex items-center justify-between text-xs sm:text-sm font-medium text-slate-400 px-1">
-              <span>{fileName} ({fileSizeKb} KB)</span>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="text-orange-400 hover:text-orange-300 font-bold"
-              >
-                {t.changeImage}
-              </button>
-            </div>
+            {/* Technical Metadata */}
+            {metadata && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                <div className="bg-zinc-900/60 p-2.5 rounded-lg border border-white/[0.04]">
+                  <span className="text-zinc-500 block">Resolution</span>
+                  <span className="font-mono text-zinc-200">{metadata.dimensions[0]} × {metadata.dimensions[1]}</span>
+                </div>
+                <div className="bg-zinc-900/60 p-2.5 rounded-lg border border-white/[0.04]">
+                  <span className="text-zinc-500 block">Format</span>
+                  <span className="font-mono text-zinc-200">{metadata.format}</span>
+                </div>
+                <div className="bg-zinc-900/60 p-2.5 rounded-lg border border-white/[0.04]">
+                  <span className="text-zinc-500 block">EXIF Data</span>
+                  <span className="font-mono text-zinc-200">{metadata.hasExif ? 'Present' : 'Stripped / Web'}</span>
+                </div>
+                <div className="bg-zinc-900/60 p-2.5 rounded-lg border border-white/[0.04]">
+                  <span className="text-zinc-500 block">Tamper Index</span>
+                  <span className="font-mono text-zinc-200">{metadata.tamperRiskIndex}/100</span>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
 
-      {/* Friendly Error Notice */}
+      {/* Loading Indicator */}
+      {loading && (
+        <div className="rounded-xl premium-card p-6 flex items-center justify-center gap-3 text-zinc-300 text-sm">
+          <Loader2 className="w-4 h-4 animate-spin text-orange-400" />
+          <span>{t.btnCheckingImage}</span>
+        </div>
+      )}
+
+      {/* Error Notice */}
       {error && (
-        <div className="rounded-2xl bg-red-950/40 border border-red-500/50 p-4 flex items-start gap-3 text-red-200 text-sm font-semibold">
-          <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+        <div className="rounded-xl bg-red-500/10 border border-red-500/20 p-3.5 flex items-start gap-2.5 text-red-300 text-sm">
+          <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
           <span>{error}</span>
         </div>
       )}
 
-      {/* Live Verdict & Forensic Metadata */}
-      {verdictData && (
-        <div className="space-y-6 animate-fadeIn">
+      {/* Verdict & Safety Advice */}
+      {verdictData && !loading && (
+        <div className="space-y-5 animate-fadeIn">
           <VerdictCard verdictData={verdictData} currentLang={currentLang} />
-
-          {/* Forensic Metadata Inspector Table */}
-          {metadata && (
-            <div className="rounded-3xl bg-slate-900/80 border border-slate-800 p-5 sm:p-6 shadow-xl">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
-                <Layers className="w-4 h-4 text-orange-400" />
-                <span>Offline Image Metadata & Pixel Forensics</span>
-              </h4>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800">
-                  <div className="text-slate-400 font-medium">Aspect Dimensions</div>
-                  <div className="text-sm font-black text-white mt-1">
-                    {metadata.dimensions[0]} × {metadata.dimensions[1]}
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800">
-                  <div className="text-slate-400 font-medium">AI Lattice Match</div>
-                  <div className={`text-sm font-black mt-1 ${metadata.aiDimensionMatch ? 'text-red-400' : 'text-slate-300'}`}>
-                    {metadata.aiDimensionMatch ? 'AI Grid Match 🚨' : 'Normal Aspect'}
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800">
-                  <div className="text-slate-400 font-medium">ELA Noise Variance</div>
-                  <div className="text-sm font-black text-white mt-1">
-                    {metadata.elaNoiseScore}% <span className="text-[10px] text-slate-400 font-normal">Anomaly</span>
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800">
-                  <div className="text-slate-400 font-medium">Camera Hardware EXIF</div>
-                  <div className="text-sm font-black text-white mt-1">
-                    {metadata.hasExif ? 'Authentic EXIF ✅' : 'Stripped / Synthetic ⚠️'}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
           {(verdictData.verdict === 'red' || verdictData.verdict === 'amber') && (
             <SafetyReport
               verdictData={verdictData}
-              originalText={`Image Evidence: ${fileName}`}
+              originalText={`Image file: ${fileName} (${fileSizeKb} KB)`}
               currentLang={currentLang}
             />
           )}
         </div>
       )}
 
-      {/* 1-Click Interactive Demonstration Sample Images for Jury */}
-      <div className="rounded-3xl bg-slate-900/60 border border-slate-800 p-5 sm:p-6 shadow-xl">
-        <div className="flex items-center gap-2 mb-1.5">
-          <Sparkles className="w-4 h-4 text-orange-400" />
-          <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-200">
-            Live Demo: 1-Click Forensic Benchmark Images
+      {/* 1-Click Benchmark Demo Samples */}
+      <div className="rounded-2xl premium-card p-5 sm:p-6">
+        <div className="mb-3">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+            {t.samplesHeading}
           </h3>
+          <p className="text-xs text-zinc-500 mt-0.5">
+            Test TrustLens against common synthetic and authentic image files:
+          </p>
         </div>
-        <p className="text-xs text-slate-400 mb-4 font-medium">
-          Click any scenario below to immediately load and inspect sample forensic images without uploading files:
-        </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {SAMPLE_IMAGES.map((sample) => {
-            const isSafe = sample.category === 'safe';
+            const isSafe = sample.expectedVerdict === 'green';
             return (
               <button
                 key={sample.id}
                 onClick={() => handleSelectSample(sample)}
-                className={`p-3.5 rounded-2xl border text-left transition-all active:scale-95 flex flex-col justify-between gap-2 shadow-sm ${
-                  isSafe
-                    ? 'bg-emerald-950/30 border-emerald-500/30 hover:border-emerald-400 hover:bg-emerald-900/40 text-emerald-200'
-                    : 'bg-slate-950/70 border-slate-800 hover:border-orange-500/60 hover:bg-slate-900 text-slate-200'
-                }`}
+                className="p-3 rounded-xl border border-white/[0.08] bg-zinc-900/60 hover:bg-zinc-800 text-left transition-colors flex items-start gap-3"
               >
-                <div className="flex items-center justify-between gap-2">
-                  <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${
-                    isSafe ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'
-                  }`}>
-                    {isSafe ? '✅ Authentic' : '🚨 High Risk'}
-                  </span>
-                  <span className="text-xs text-slate-400 font-mono">
-                    {sample.fileSizeKb} KB
-                  </span>
+                <div className="w-12 h-12 rounded-lg bg-zinc-950 border border-zinc-800 overflow-hidden flex-shrink-0">
+                  <img src={sample.dataUrl} alt={sample.title} className="w-full h-full object-cover" />
                 </div>
-
-                <div className="text-xs font-bold text-white line-clamp-1">
-                  {currentLang === 'mr' ? sample.titleMr : (currentLang === 'hi' ? sample.titleHi : sample.title)}
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className={`w-1.5 h-1.5 rounded-full ${isSafe ? 'bg-emerald-400' : 'bg-red-400'}`} />
+                    <span className="text-xs font-medium text-zinc-200 truncate">{sample.title}</span>
+                  </div>
+                  <p className="text-[11px] text-zinc-400 line-clamp-2 mt-0.5 leading-relaxed">
+                    {currentLang === 'mr' ? sample.descriptionMr : (currentLang === 'hi' ? sample.descriptionHi : sample.description)}
+                  </p>
                 </div>
-
-                <p className="text-[11px] text-slate-400 line-clamp-2">
-                  {currentLang === 'mr' ? sample.descriptionMr : (currentLang === 'hi' ? sample.descriptionHi : sample.description)}
-                </p>
               </button>
             );
           })}

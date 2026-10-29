@@ -15,7 +15,7 @@ export const App: React.FC = () => {
   const t = I18N[currentLang];
 
   return (
-    <div className="min-h-screen flex flex-col font-sans relative selection:bg-orange-500 selection:text-white">
+    <div className="min-h-screen flex flex-col font-sans bg-[#0a0c10] text-zinc-100 selection:bg-orange-500 selection:text-white">
       {/* Brand Header */}
       <Header
         currentLang={currentLang}
@@ -29,8 +29,8 @@ export const App: React.FC = () => {
         currentLang={currentLang}
       />
 
-      {/* Main Forensic Command Workspace */}
-      <main className="flex-1 max-w-5xl w-full mx-auto px-3 sm:px-6 py-6 sm:py-8">
+      {/* Main Workspace */}
+      <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {currentTab === 'text' && (
           <TextCheck currentLang={currentLang} />
         )}
@@ -52,21 +52,21 @@ export const App: React.FC = () => {
         )}
       </main>
 
-      {/* High-Tech Cyber Footer */}
-      <footer className="bg-[#060913] text-slate-500 border-t border-slate-900 py-6 px-4 mt-auto">
+      {/* Clean Footer */}
+      <footer className="bg-[#07090d] text-zinc-500 border-t border-white/[0.06] py-6 px-4 mt-auto">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-center sm:text-left">
           <div className="space-y-0.5">
             <div>
-              <span className="font-black text-slate-300">TrustLens 2026</span> • Seva First Innovation Challenge Flagship
+              <span className="font-semibold text-zinc-300">TrustLens 2026</span> • Seva First Innovation Challenge
             </div>
-            <div className="text-[11px] text-slate-400">
-              Responsible AI, Deepfake Detection, Cyber Resilience & Digital Trust
+            <div className="text-[11px] text-zinc-500">
+              Citizen Scam Verification & Deepfake Forensics
             </div>
           </div>
 
-          <div className="flex flex-col sm:items-end gap-0.5 text-slate-400">
-            <span className="font-semibold text-slate-300">{t.disclaimer}</span>
-            <span className="text-[11px] text-slate-400">100% Stateless • Zero Data Persistence</span>
+          <div className="flex flex-col sm:items-end gap-0.5 text-zinc-400">
+            <span className="text-zinc-400">{t.disclaimer}</span>
+            <span className="text-[11px] text-zinc-500">Stateless • Zero Data Persistence</span>
           </div>
         </div>
       </footer>
