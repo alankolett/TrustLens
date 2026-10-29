@@ -4,8 +4,13 @@
 
 @layer base {
   body {
-    @apply bg-[#0a0c10] text-zinc-100 antialiased font-sans;
-    background-color: #0a0c10;
+    @apply bg-[#080a0f] text-zinc-100 antialiased font-sans;
+    background-color: #080a0f;
+    background-image: 
+      radial-gradient(ellipse 70% 40% at 50% -10%, rgba(249, 115, 22, 0.12), transparent 70%),
+      radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+    background-size: 100% 100%, 24px 24px;
+    background-attachment: fixed;
     min-height: 100vh;
   }
 }
@@ -20,11 +25,45 @@
   }
 }
 
-/* Subtle fade transition */
+/* Glass & Card Surfaces */
+.glass-panel {
+  background: rgba(15, 18, 25, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06), 0 20px 40px -15px rgba(0, 0, 0, 0.6);
+}
+
+.glass-panel-subtle {
+  background: rgba(18, 22, 31, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.glass-card-interactive {
+  background: rgba(18, 22, 31, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card-interactive:hover {
+  background: rgba(26, 32, 45, 0.85);
+  border-color: rgba(255, 255, 255, 0.16);
+  transform: translateY(-1px);
+}
+
+.glass-well {
+  background: rgba(10, 12, 17, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(4px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
@@ -33,30 +72,20 @@
 }
 
 .animate-fadeIn {
-  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Premium tactile card surfaces */
-.premium-card {
-  background: #11141c;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px -1px rgba(0, 0, 0, 0.4);
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
 }
 
-.premium-card-interactive {
-  background: #11141c;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.4);
-  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 35s linear infinite;
 }
 
-.premium-card-interactive:hover {
-  background: #151922;
-  border-color: rgba(255, 255, 255, 0.15);
-}
-
-/* Subtle inner well for inputs */
-.premium-input-well {
-  background: #0d0f15;
-  border: 1px solid rgba(255, 255, 255, 0.09);
+.animate-marquee:hover {
+  animation-play-state: paused;
 }

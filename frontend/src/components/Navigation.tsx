@@ -26,19 +26,19 @@ export const Navigation: React.FC<NavigationProps> = ({
   ];
 
   return (
-    <nav className="bg-[#0a0c10]/80 border-b border-white/[0.06] sticky top-[57px] z-30 backdrop-blur-md">
+    <nav className="sticky top-0 z-30 bg-[#080a0f]/90 backdrop-blur-xl border-b border-white/[0.06] py-2.5">
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
-        <div className="flex items-center overflow-x-auto no-scrollbar gap-1 py-2">
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar p-1 rounded-xl bg-zinc-900/60 border border-white/[0.06]">
           {tabs.map((tab) => {
             const isActive = currentTab === tab.id;
             return (
               <button
                 key={tab.id}
                 onClick={() => onTabChange(tab.id)}
-                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap transition-all ${
+                className={`flex-1 min-w-fit flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap transition-all ${
                   isActive
-                    ? 'bg-zinc-800/90 text-white shadow-xs border border-white/[0.08]'
-                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
+                    ? 'bg-zinc-800 text-white shadow-xs border border-white/[0.1]'
+                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/40'
                 }`}
               >
                 <span className={isActive ? 'text-orange-400' : 'text-zinc-400'}>

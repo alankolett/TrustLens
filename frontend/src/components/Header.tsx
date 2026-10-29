@@ -17,7 +17,7 @@ export const Header: React.FC<HeaderProps> = ({ currentLang, onLanguageChange })
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-[#0a0c10]/95 backdrop-blur-md border-b border-white/[0.08]">
+    <header className="bg-[#080a0f] border-b border-white/[0.06]">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
         {/* Brand identity */}
         <div className="flex items-center gap-3">
