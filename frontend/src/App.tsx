@@ -3,8 +3,9 @@ import { Header } from './components/Header';
 import { Navigation, NavTab } from './components/Navigation';
 import { TextCheck } from './components/TextCheck';
 import { ImageCheck } from './components/ImageCheck';
+import { VoiceForensics } from './components/VoiceForensics';
+import { VideoForensics } from './components/VideoForensics';
 import { ResponsibleAIPage } from './components/ResponsibleAIPage';
-import { ComingSoonTab } from './components/ComingSoonTab';
 import { Language, I18N } from './i18n';
 
 export const App: React.FC = () => {
@@ -14,22 +15,22 @@ export const App: React.FC = () => {
   const t = I18N[currentLang];
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+    <div className="min-h-screen flex flex-col font-sans relative selection:bg-orange-500 selection:text-white">
       {/* Brand Header */}
       <Header
         currentLang={currentLang}
         onLanguageChange={setCurrentLang}
       />
 
-      {/* Primary Navigation Tabs */}
+      {/* Navigation Dock */}
       <Navigation
         currentTab={currentTab}
         onTabChange={setCurrentTab}
         currentLang={currentLang}
       />
 
-      {/* Main Content Area */}
-      <main className="flex-1 max-w-4xl w-full mx-auto px-3 sm:px-6 py-6 sm:py-8">
+      {/* Main Forensic Command Workspace */}
+      <main className="flex-1 max-w-5xl w-full mx-auto px-3 sm:px-6 py-6 sm:py-8">
         {currentTab === 'text' && (
           <TextCheck currentLang={currentLang} />
         )}
@@ -39,19 +40,11 @@ export const App: React.FC = () => {
         )}
 
         {currentTab === 'voice' && (
-          <ComingSoonTab
-            type="voice"
-            currentLang={currentLang}
-            onGoBack={setCurrentTab}
-          />
+          <VoiceForensics currentLang={currentLang} />
         )}
 
         {currentTab === 'video' && (
-          <ComingSoonTab
-            type="video"
-            currentLang={currentLang}
-            onGoBack={setCurrentTab}
-          />
+          <VideoForensics currentLang={currentLang} />
         )}
 
         {currentTab === 'about' && (
@@ -59,17 +52,21 @@ export const App: React.FC = () => {
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="bg-navy-950 text-slate-400 border-t border-navy-900 py-6 px-4 mt-auto">
-        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-center sm:text-left">
-          <div>
-            <span className="font-bold text-slate-200">TrustLens 2026</span> • Built for Seva First Innovation Challenge
-            <div className="text-slate-500 mt-0.5">
-              Theme: Responsible AI, Deepfake Detection, Cyber Resilience & Digital Trust
+      {/* High-Tech Cyber Footer */}
+      <footer className="bg-[#060913] text-slate-500 border-t border-slate-900 py-6 px-4 mt-auto">
+        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-center sm:text-left">
+          <div className="space-y-0.5">
+            <div>
+              <span className="font-black text-slate-300">TrustLens 2026</span> • Seva First Innovation Challenge Flagship
+            </div>
+            <div className="text-[11px] text-slate-400">
+              Responsible AI, Deepfake Detection, Cyber Resilience & Digital Trust
             </div>
           </div>
-          <div className="font-medium text-slate-400">
-            {t.disclaimer}
+
+          <div className="flex flex-col sm:items-end gap-0.5 text-slate-400">
+            <span className="font-semibold text-slate-300">{t.disclaimer}</span>
+            <span className="text-[11px] text-slate-400">100% Stateless • Zero Data Persistence</span>
           </div>
         </div>
       </footer>
